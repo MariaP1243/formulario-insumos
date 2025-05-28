@@ -92,7 +92,7 @@
       { id: 'insumo5', name: 'Clips metálicos' }
     ];
 
-    function generateOptions(selectedId) {
+    function generateOptions() {
       return inventory.map(item => {
         return `<option value="${item.id}">${item.name}</option>`;
       }).join('');
