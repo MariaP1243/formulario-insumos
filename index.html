@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Formulario de Solicitud de Insumos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      padding: 20px;
+    }
+    .container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .item-row {
+      display: flex;
+      gap: 10px;
+    }
+    .item-row > * {
+      flex: 1;
+    }
+    .remove-btn {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .add-item-btn {
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .submit-btn {
+      background-color: #2980b9;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Formulario de Solicitud de Insumos</h1>
+    <form id="request-form" autocomplete="off">
+      <label for="requester">Quién realiza la solicitud:</label>
+      <input type="text" id="requester" name="requester" required />
+
+      <label>Seleccionar insumos y cantidad solicitada:</label>
+      <div id="items-container"></div>
+      <button type="button" class="add-item-btn" id="add-item-btn">+ Agregar insumo</button>
+
+      <button type="submit" class="submit-btn">Enviar solicitud</button>
+    </form>
+  </div>
+
+  <script>
+    const requesterInput = document.getElementById('requester');
+    const itemsContainer = document.getElementById('items-container');
+    const addItemBtn = document.getElementById('add-item-btn');
+    const requestForm = document.getElementById('request-form');
+
+    const inventory = [
+      { id: 'insumo1', name: 'Papel A4' },
+      { id: 'insumo2', name: 'Tinta impresora negra' },
+      { id: 'insumo3', name: 'Bolígrafo azul' },
+      { id: 'insumo4', name: 'Carpeta colgante' },
+      { id: 'insumo5', name: 'Clips metálicos' }
+    ];
+
+    function generateOptions() {
+      return inventory.map(item => {
+        return `<option value="${item.id}">${item.name}</option>`;
+      }).join('');
+    }
+
+    function addItemRow() {
+      const row = document.createElement('div');
+      row.className = 'item-row';
+
+      const select = document.createElement('select');
+      select.innerHTML = generateOptions();
+      row.appendChild(select);
+
+      const qtyInput = document.createElement('input');
+      qtyInput.type = 'number';
+      qtyInput.min = '1';
+      qtyInput.placeholder = 'Cantidad';
+      row.appendChild(qtyInput);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.textContent = 'Quitar';
+      removeBtn.className = 'remove-btn';
+      removeBtn.onclick = () => row.remove();
+      row.appendChild(removeBtn);
+
+      itemsContainer.appendChild(row);
+    }
+
+    function clearItems() {
+      itemsContainer.innerHTML = '';
+    }
+
+    function handleSubmit(e) {
+      e.preventDefault();
+      const requester = requesterInput.value.trim();
+      if (!requester) {
+        alert('Por favor ingrese el nombre de quien realiza la solicitud.');
+        return;
+      }
+
+      const rows = Array.from(itemsContainer.children);
+      if (rows.length === 0) {
+        alert('Debe agregar al menos un insumo para solicitar.');
+        return;
+      }
+
+      const items = [];
+      for (const row of rows) {
+        const select = row.querySelector('select');
+        const qtyInput = row.querySelector('input[type="number"]');
+        const id = select.value;
+        const name = select.options[select.selectedIndex].text;
+        const quantity = parseInt(qtyInput.value, 10);
+        if (!id || !(quantity > 0)) {
+          alert('Verifique los insumos y cantidades ingresadas.');
+          return;
+        }
+        items.push({ id, name, quantity, status: 'Solicitado' });
+      }
+
+      const data = { requester, items };
+
+      fetch('https://script.google.com/macros/s/AKfycby0Ea5sYncJhtfluApzGtdN_eVkejVkU-qVadYkFedhKDMwgmUTm3Z8hc4tilAthpxv/exec', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(res => {
+        if (res.ok) {
+          alert('Solicitud enviada exitosamente.');
+          requestForm.reset();
+          clearItems();
+          addItemRow();
+        } else {
+          alert('Error al enviar la solicitud.');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Error de conexión.');
+      });
+    }
+
+    addItemBtn.onclick = () => addItemRow();
+    requestForm.onsubmit = handleSubmit;
+    addItemRow();
+  </script>
+</body>
+</html>
